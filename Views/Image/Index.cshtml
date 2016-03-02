@@ -1,0 +1,151 @@
+﻿@model CutImage.Models.UploadImageModel
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <link href="~/Scripts/imgareaselect/img/imgareaselect-animated.css" rel="stylesheet" />
+    <link href="~/Content/User.css" rel="stylesheet" />
+    @*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <script src="~/Scripts/jquery-1.10.2.min.js"></script>
+    <script src="~/Scripts/jquery-1.9.1.js"></script>*@
+    <script src="~/Scripts/jquery-1.7.1.min.js"></script>
+    <script src="~/Scripts/jquery.form.js"></script>
+    <script src="~/Scripts/imgareaselect/jquery.imgareaselect.pack.js"></script>
+    <script src="~/Scripts/imgareaselect/head.js"></script>
+    <script src="~/Scripts/imgareaselect/popup.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#user_head_form").ajaxForm({
+                dataType: 'json',
+                success: function (data) {
+                    $('#user_head_upload_box').show();
+                    $('#user_head_show_box').hide();
+                    if (data != undefined && data != null) {
+                        debugger
+                        if (data.msg == 0) {
+                            showWarning("提示", "请上传图片！", false, true);
+                        } else if (data.msg == -1) {
+                            showWarning("提示", "文件格式不对！", false, true);
+                        } else if (data.msg == -2) {
+                            showWarning("提示", "上传图片不能超过3M！", false, true);
+                        } else if (data.msg == -3) {
+                            showWarning("提示", "出现异常，请稍后再试！", false, true);
+                        } else {
+                            $("#btnYes").removeAttr("disabled");
+                            var path = "/file/temp/" + data.msg;
+                            $("#head_name").val(data.msg);
+                            UserHeadUtil.initialize(path);
+                        }
+                    }
+                }
+            });
+            $("#user_head_param_form").ajaxForm({
+                dataType: "JSON",
+                success: function (data) {
+                    if (data.msg == 0) {
+                        showWarning("提示", "请选择图片", false, true);
+                        return false;
+                    } else if (data.msg == -1) {
+                        showWarning("提示", "系统出现异常，请稍后再试！", false, true);
+                        return false;
+                    } else {
+                        var dialog = top.dialog.get(window);
+                        dialog.close(data.msg);
+                        dialog.remove();				 // 主动销毁对话框
+                        return false;
+                    }
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div style="margin-left:20px">当前头像</div>
+    <div style="margin-left:20px"><img id="origin_user_head" src="/images/football.jpg" style="padding:5px; border:2px" width="75" height="75" alt="当前头像"></div>
+    @*<dl class="mydl">
+            <dt>当前头像</dt>
+            <dd class="myphoto"><img id="origin_user_head" src="" style="padding:5px; border:2px" width="75" height="75" alt="当前头像"></dd>
+        </dl>*@
+    <div class="upbox clearfix">
+        <div class="upPhoto" style="padding-left:20px">
+            <div class="upcon" id="user_head_upload_box">
+                <p class="phototxt">选择你要上传的头像</p>
+                <div class="upfile">
+                    @using (Html.BeginForm("UploadHead", "Image", FormMethod.Post, new { ID = "user_head_form", enctype = "multipart/form-data" }))
+                    {
+                        <input type="file" name="head" class="filebtn" onchange="$('#user_head_upload_box').hide();$('#user_head_show_box').show();$('#user_head_form').submit();" />
+                        <input type="button" class="upimgbtn" value="上传头像" />
+                    }
+                </div>
+            </div>
+            <div id="user_head_show_box" style="width: 300px; height: 300px; line-height: 300px; text-align: center; background: gray no-repeat; margin-bottom: 40px; display: none">
+                <img id="user_head_origin" style="vertical-align: middle;" src="/Content/img/load.gif">
+            </div>
+
+            <div class="sysbtn">
+
+                @using (Html.BeginForm((string)ViewBag.action, "Emp", FormMethod.Post, new { ID = "user_head_param_form", enctype = "multipart/form-data" }))
+                {
+                    @Html.HiddenFor(model => model.HeadFileName, new { id = "head_name" })
+                    @Html.HiddenFor(model => model.X, new { id = "head_x" })
+                    @Html.HiddenFor(model => model.Y, new { id = "head_y" })
+                    @Html.HiddenFor(model => model.Width, new { id = "head_width" })
+                    @Html.HiddenFor(model => model.Height, new { id = "head_height" })
+                    <input type="text" id="txtUserId" name="txtUserId" style="display:none;" />
+                    <div style="text-align:center;padding:5px; position:absolute; bottom:5px;left:220px">
+                        <input type="submit" id="btnYes" class="btnyes" disabled="disabled" value="保存" style="display:none">
+                        <input type="button" class="btnno" value="取消" onclick="cancelHead();" style="display:none">
+                    </div>
+                }
+            </div>
+
+
+        </div>
+        <div class="upPhotolist clearfix" >
+            <div class="upimg upbig">
+                <div class="upimgbox up_1">
+                    <img src="/images/football.jpg" style="width: 180px; height: 180px" id="user_head_180">
+                </div>
+                <p>支持jpg、gif、png或bmp格式，<br />可以在大照片中剪裁</p>
+            </div>
+            <div class="upimg upsmall">
+                <div class="upsm">
+                    <div class="upimgbox up_2">
+                        <img src="/images/football.jpg" style="width: 75px; height: 75px" id="user_head_75">
+                    </div>
+                    <p>
+                        中尺寸头像<br>
+                        75×75像素
+                    </p>
+                </div>
+                <div class="upsm">
+                    <div class="upimgbox up_3">
+                        <img src="/images/football.jpg" style="width: 50px; height: 50px" id="user_head_50">
+                    </div>
+                    <p>
+                        中尺寸头像<br>
+                        50×50像素
+                    </p>
+                </div>
+                <div class="upsm">
+                    <div class="upimgbox up_4">
+                        <img src="/images/football.jpg" style="width: 25px; height: 25px" id="user_head_25">
+                    </div>
+                    <p>
+                        小尺寸头像<br>
+                        25×25像素
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
